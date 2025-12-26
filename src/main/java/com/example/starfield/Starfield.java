@@ -128,6 +128,14 @@ public class Starfield extends JFrame {
 
     public static void main(String[] args) {
         System.setProperty("apple.laf.useScreenMenuBar", "true");
+        System.setProperty("apple.awt.application.appearance", "system");
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         EventQueue.invokeLater(() -> {
             Starfield ex = new Starfield();
             ex.setVisible(true);
