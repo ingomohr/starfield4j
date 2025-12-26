@@ -3,6 +3,9 @@ package com.example.starfield;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.lang.reflect.Method;
 import java.util.Random;
 import javax.swing.*;
 
@@ -12,12 +15,60 @@ public class Starfield extends JFrame {
         initUI();
     }
 
+    private void toggleFullScreen() {
+        try {
+            Class<?> appClass = Class.forName("com.apple.eawt.Application");
+            Method getApplicationMethod = appClass.getMethod("getApplication");
+            Object appInstance = getApplicationMethod.invoke(null);
+
+            Method requestToggleFullScreenMethod = appClass.getMethod(
+                "requestToggleFullScreen",
+                java.awt.Window.class
+            );
+            requestToggleFullScreenMethod.invoke(appInstance, this);
+        } catch (Exception e) {
+            // Not on a Mac or an older version of Java
+            // Fallback to the old method
+            GraphicsDevice device =
+                GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            if (device.isFullScreenSupported()) {
+                if (device.getFullScreenWindow() == null) {
+                    device.setFullScreenWindow(this);
+                } else {
+                    device.setFullScreenWindow(null);
+                }
+            }
+        }
+    }
+
     private void initUI() {
         add(new StarPanel());
         setTitle("Starfield Simulation");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+
+        getRootPane()
+            .getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+            .put(
+                KeyStroke.getKeyStroke(
+                    KeyEvent.VK_F,
+                    Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() |
+                        InputEvent.CTRL_DOWN_MASK
+                ),
+                "toggleFullScreen"
+            );
+        getRootPane()
+            .getActionMap()
+            .put(
+                "toggleFullScreen",
+                new AbstractAction() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        toggleFullScreen();
+                    }
+                }
+            );
     }
 
     public static void main(String[] args) {
