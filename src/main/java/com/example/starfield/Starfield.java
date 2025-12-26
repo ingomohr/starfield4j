@@ -11,6 +11,9 @@ import javax.swing.*;
 
 public class Starfield extends JFrame {
 
+    private JMenuItem enterFullScreenItem;
+    private JMenuItem exitFullScreenItem;
+
     public Starfield() {
         initUI();
     }
@@ -35,6 +38,10 @@ public class Starfield extends JFrame {
     }
 
     private void toggleFullScreen() {
+        boolean isEnteringFullScreen = enterFullScreenItem.isVisible();
+        enterFullScreenItem.setVisible(!isEnteringFullScreen);
+        exitFullScreenItem.setVisible(isEnteringFullScreen);
+
         try {
             // Use macOS native fullscreen API via reflection
             Class<?> appClass = Class.forName("com.apple.eawt.Application");
@@ -72,6 +79,30 @@ public class Starfield extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
+        JMenuBar menuBar = new JMenuBar();
+        JMenu viewMenu = new JMenu("View");
+        viewMenu.setMnemonic(KeyEvent.VK_V);
+
+        KeyStroke fullScreenKeyStroke = KeyStroke.getKeyStroke(
+            KeyEvent.VK_F,
+            Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() |
+                InputEvent.CTRL_DOWN_MASK
+        );
+
+        enterFullScreenItem = new JMenuItem("Enter Fullscreen", KeyEvent.VK_F);
+        enterFullScreenItem.setAccelerator(fullScreenKeyStroke);
+        enterFullScreenItem.addActionListener(e -> toggleFullScreen());
+
+        exitFullScreenItem = new JMenuItem("Exit Fullscreen", KeyEvent.VK_F);
+        exitFullScreenItem.setAccelerator(fullScreenKeyStroke);
+        exitFullScreenItem.addActionListener(e -> toggleFullScreen());
+        exitFullScreenItem.setVisible(false);
+
+        viewMenu.add(enterFullScreenItem);
+        viewMenu.add(exitFullScreenItem);
+        menuBar.add(viewMenu);
+        setJMenuBar(menuBar);
+
         getRootPane()
             .getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
             .put(
@@ -96,6 +127,7 @@ public class Starfield extends JFrame {
     }
 
     public static void main(String[] args) {
+        System.setProperty("apple.laf.useScreenMenuBar", "true");
         EventQueue.invokeLater(() -> {
             Starfield ex = new Starfield();
             ex.setVisible(true);
