@@ -15,8 +15,28 @@ public class Starfield extends JFrame {
         initUI();
     }
 
+    private void setupMacOSFullscreenSupport() {
+        try {
+            // Setup fullscreen capability for macOS using reflection
+            // This works with Java 9+ when proper module access is granted
+            Class<?> util = Class.forName("com.apple.eawt.FullScreenUtilities");
+            Method setWindowCanFullScreen = util.getMethod(
+                "setWindowCanFullScreen",
+                java.awt.Window.class,
+                boolean.class
+            );
+            setWindowCanFullScreen.invoke(util, this, true);
+            System.out.println("macOS fullscreen capability enabled");
+        } catch (Exception e) {
+            System.err.println(
+                "Could not enable macOS fullscreen: " + e.getMessage()
+            );
+        }
+    }
+
     private void toggleFullScreen() {
         try {
+            // Use macOS native fullscreen API via reflection
             Class<?> appClass = Class.forName("com.apple.eawt.Application");
             Method getApplicationMethod = appClass.getMethod("getApplication");
             Object appInstance = getApplicationMethod.invoke(null);
@@ -27,8 +47,12 @@ public class Starfield extends JFrame {
             );
             requestToggleFullScreenMethod.invoke(appInstance, this);
         } catch (Exception e) {
-            // Not on a Mac or an older version of Java
-            // Fallback to the old method
+            System.err.println(
+                "Failed to toggle native macOS fullscreen: " + e.getMessage()
+            );
+            e.printStackTrace();
+
+            // Fallback to the old method (borderless fullscreen)
             GraphicsDevice device =
                 GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
             if (device.isFullScreenSupported()) {
@@ -75,6 +99,7 @@ public class Starfield extends JFrame {
         EventQueue.invokeLater(() -> {
             Starfield ex = new Starfield();
             ex.setVisible(true);
+            ex.setupMacOSFullscreenSupport();
         });
     }
 
